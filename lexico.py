@@ -1,13 +1,15 @@
 import sys
+
 input = "".join(sys.stdin.readlines())
 
-def token(input,init):
+
+def token(input, init):
     state = 0
     index = init
     return_aux = None
     while index < len(input):
         c = input[index]
-        index+=1
+        index += 1
         if state == 0:
             if c == '(' or c == '[':
                 state = 1
@@ -33,18 +35,20 @@ def token(input,init):
                 state = 17
             elif c == '\t' or c == '\n' or c == ' ':
                 state = 18
+            elif c == '"':
+                state = 19
             else:
                 state = 14
         elif state == 1:
-            return (index-1, "PO" )
+            return (index - 1, "PO")
         elif state == 2:
-            return (index-1, "PC" )
+            return (index - 1, "PC")
         elif state == 3:
             if c == '-':
                 state = 4
-                return_aux = (index-1,"SIMBOLO")
+                return_aux = (index - 1, "SIMBOLO")
             else:
-                index-=1
+                index -= 1
                 state = 15
         elif state == 4:
             if c.isalpha():
@@ -52,16 +56,16 @@ def token(input,init):
             elif return_aux is not None:
                 return return_aux
             else:
-                index-=1
+                index -= 1
                 state = 14
         elif state == 5:
-            return (index-1,"CUALQUIER LETRA")
+            return (index - 1, "CUALQUIER LETRA")
         elif state == 6:
             if c == '-':
                 state = 7
-                return_aux = (index-1,"SIMBOLO")
+                return_aux = (index - 1, "SIMBOLO")
             else:
-                index-=1
+                index -= 1
                 state = 15
         elif state == 7:
             if c.isdigit():
@@ -69,40 +73,51 @@ def token(input,init):
             elif return_aux is not None:
                 return return_aux
             else:
-                index-=1
+                index -= 1
                 state = 14
         elif state == 8:
-            return (index-1,"CUALQUIER NUMERO")
+            return (index - 1, "CUALQUIER NUMERO")
         elif state == 9:
-            return (index-1,"+")
+            return (index - 1, "+")
         elif state == 10:
-            return (index-1,"KLEENE")
+            return (index - 1, "KLEENE")
         elif state == 11:
-            return (index-1,"OR")
+            return (index - 1, "OR")
         elif state == 12:
-            return (index-1,"ASIGNACION")
+            return (index - 1, "ASIGNACION")
         elif state == 13:
-            return (index-1,"CUALQUIERCOSA")
-        elif state == 14:  #TODO: testing
-            return (index-1,"SIMBOLO")
+            return (index - 1, "CUALQUIERCOSA")
+        elif state == 14:  # TODO: testing
+            return (index - 1, "NO REC")
         elif state == 15:
-            return (index-1,"SIMBOLO")
+            return (index - 1, "SIMBOLO")
         elif state == 16:
             if c == '=':
                 state = 12
         elif state == 17:
-            return (index-1,"OPER ?")
+            return (index - 1, "OPER ?")
         elif state == 18:
             if c == '\t' or c == '\n' or c == ' ':
                 state = 18
             else:
-                return (index-1,"BLANCO")
+                return (index - 1, "BLANCO")
+        elif state == 19:
+            return (index - 1, "COMILLA")
         else:
             return (index, "DESCONOCIDO")
+Prod_Expresion = ["Expresion OR Expresion",
+                  "PC Expresion PO",
+                  "Expresion Expresion",
+                  "Parentesis KLENE",
+                  "parentesis +",
+                  "SIMBOLO"]
+def Expresion ():
+    pass
 
 index = 0
-while index < len(input)-1:
-    t = token(input,index)
-    if t[1] is not "BLANCO":
-        print input[index:t[0]], "\t", t
+while index < len(input) - 1:
+    t =  token(input, index)
+    # if t[1]  is not "BLANCO":
+    print input[index:t[0]], "\t", t
     index = t[0]
+
