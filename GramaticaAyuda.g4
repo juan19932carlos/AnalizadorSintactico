@@ -1,23 +1,21 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 
 grammar GramaticaAyuda;
 
-init: (lineas)+;
-lineas: TERM = (NO_TERMINAL | TERMINAL) '=>' expresion ;
+init: CLASE ENDL (lineas ENDL)+;
+lineas: NO_TERMINAL '=>' expresion          #exp_noterminal
+      //| TERMINAL '=>' expresion_regular     #exp_terminal
+;
+expresion: expresion OP = ( OP_KLEENE | OP_UNICO | OP_POSITIVO )    #operacion
+         | expresion '|' expresion                                  #or
+         | '(' expresion ')'                                        #parentecis
+         | (TERMINAL | NO_TERMINAL)                                 #terminal
+;
 
-expresion: palabra                              #terminal
-         | expresion OP = ( '*' | '?' | '+' )   #operacion
-         | expresion '|' expresion              #or
-         | '(' expresion ')'                    #parentecis
-         ;
-
-palabra: TERMINAL
-       ;
-
+CLASE: 'lexer' | 'parser';
+OP_POSITIVO: '+';
+OP_UNICO: '?';
+OP_KLEENE: '*';
 NO_TERMINAL: [A-Z]+;
 TERMINAL: [a-z]+;
-BASURA: [\t\n' '\r]+ -> skip;
+ENDL: [\n]+;
+BASURA: [\t' '\r]+ -> skip;

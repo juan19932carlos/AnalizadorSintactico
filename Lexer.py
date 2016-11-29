@@ -1,9 +1,9 @@
 import sys
 
-class Lexer:
+class LexicoLexer:
     def __init__(self, entrada):
         self.input = entrada
-        self.TokenList = list()
+        self.TokenList = []
         self.index = 0
     def getNextToken(self,ind = None):
         state = 0
@@ -30,8 +30,6 @@ class Lexer:
                     state = 11
                 elif c == ':':
                     state = 16
-                elif c == '=':
-                    state = 12
                 elif c == '.':
                     state == 13
                 elif c == '?':
@@ -95,8 +93,7 @@ class Lexer:
             elif state == 15:
                 return (ind - 1, "SIMBOLO")
             elif state == 16:
-                if c == '=':
-                    state = 12
+                return (ind - 1, "CONCATENACION")
             elif state == 17:
                 return (ind - 1, "OPER ?")
             elif state == 18:
@@ -113,25 +110,76 @@ class Lexer:
         if remake or len(self.TokenList) == 0:
             while bandera < len(self.input)-1:
                 token = self.getNextToken(bandera)
-                self.TokenList.append( token )
-                bandera += token[0]
+                if token[1] != "BLANCO":
+                    txt = self.input[bandera:token[0]]
+                    (self.TokenList).append( token + tuple(txt) )
+                bandera = token[0]
         return self.TokenList
 
-class parser:
-    def __init__(self,input):
-        if type(input) != type(list()):
+class LexicoParser:
+    def __init__(self,tokens):
+        if type(tokens) != type(list()):
             raise Exception("Debe ingresar una lista de tokens.")
             return
         #Lista de primeras en
-        self.primeras = {}
-        self.primeras["init"]=[""]
+        self.D = {}
+        self.tokens = tokens
         self.index = 0
-        self.inicio(input)
+        self.aux= 0
+    def or_exp(self):
+        self.cat_exp()
+        self.or_exp_p()
+    def or_exp_p(self):
+        if self.tokens[self.index][1] == "OR":
+            self.index += 1
+            self.cat_exp()
+            self.or_exp_p()
+        else:
+            return
+    def cat_exp(self):
+        self.kleene()
+        self.cat_exp_p()
+    def cat_exp_p(self):
+        if self.tokens[self.index][1] == "CONCATENACION":
+            self.index += 1
+            self.kleene()
+            self.cat_exp_p()
+        else:
+            return
+    def kleene(self):
+        self.parent()
+        self.kleene_p()
+    def kleene_p(self):
+        if self.tokens[self.index][1] == "+":
+            self.index+=1
+        elif self.tokens[self.index][1] == "+":
+            self.index+=1
+        else:
+            return
+    def parent(self):
+        if self.tokens[self.index][1] == "PO":
+            self.index += 1
+            self.or_exp()
+            if self.tokens[self.index][1] != "PC":
+                raise Exception("No hay equilibrio de parentecis",self.tokens[self.index][0])
+        elif self.tokens[self.index][1] == "SIMBOLO":
+            pass
+        elif self.tokens[self.index][1] == "CUALQUIER NUMERO":
+            pass
+        elif self.tokens[self.index][1] == "CUALQUIER LETRA":
+            pass
+        elif self.tokens[self.index][1] == "CUALQUIERCOSA":
+            pass
 
-    def inicio(self,input):
 
 
-
-input = "".join( sys.stdin.readlines() )
-lexer = Lexer(input)
-print lexer.getTokenList()
+#para el lexer y definicion de tokens
+archivo = open ( sys.argv[1]+".lx")
+texto = archivo.readlines()
+for expresiones in texto:
+    aux = expresiones.split("=>")
+    name = aux[0]
+    lexer = LexicoLexer(aux[1])
+    tokens = lexer.getTokenList()
+    parser = LexicoParser(tokens)
+    
