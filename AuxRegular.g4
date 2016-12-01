@@ -1,13 +1,10 @@
 grammar AuxRegular;
 
-or_exp: cat_exp or_exp_p;
-or_exp_p: '|' cat_exp or_exp_p | ;
+or_exp: cat_exp '|' cat_exp | cat_exp ;
 
-cat_exp: kleene cat_exp_p ;
-cat_exp_p: '.' kleene cat_exp_p | ;
+cat_exp: kleene ':' cat_exp | kleene | ;
 
-kleene: parent kleene_p ;
-kleene_p: '+' | '*' | ;
+kleene: parent '+' | parent'*' | parent;
 
 parent: '(' or_exp ')' | CARACTER;
 
