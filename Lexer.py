@@ -132,7 +132,7 @@ class LexicoParser:
         #Lista de primeras en
         self.D = {}
         self.tokens = tokens
-        self.tokens.append((None, None, None))
+        self.tokens.append((None, "END", "\r"))
         self.index = 0  # index para el contador de los tokens
         self.etiqueta = 0  #Etiquetas para los nodos
         self.aux = 0
@@ -163,55 +163,62 @@ class LexicoParser:
         else:
             return False
 
+    def hasParentLoop(self, nodo):
+        curr = nodo
+        while curr is not self.root:
+            if curr.Dato[1] == "KLEENE" or curr.Dato[1] == "+":
+                return curr
+            else:
+                curr = curr.padre
+        return False
+
     def primerapos(self, nodo):
         token = nodo.Dato[1]
         if token == "OR":
             return self.primerapos(nodo.izquierdo) + self.primerapos(nodo.derecho)
         elif token == "CONCATENACION":
             return self.primerapos(nodo.izquierdo)
-        elif token == "KLEENE" or token == "+":
-            return self.primerapos(nodo.derecho) + self.siguientepos(nodo)
+        elif token == "KLEENE":
+            if nodo != self.root:
+                return self.primerapos(nodo.derecho) + self.siguientepos(nodo)
+            else:
+                return self.primerapos(nodo.derecho) + [(None, "VOID", '\0')]
+        elif token == "+":
+            if nodo != self.root:
+                return self.primerapos(nodo.derecho) + self.siguientepos(nodo)
+            else:
+                return self.primerapos(nodo.derecho)
         else:
-            return [("".join(nodo.Dato[2:]), nodo.etiqueta, nodo)]
+            return [(nodo)]
 
     def ultimapos(self, nodo):
         token = nodo.Dato[1]
         if token == "OR":
-            return self.primerapos(nodo.izquierdo) + self.primerapos(nodo.derecho)
+            return self.ultimapos(nodo.izquierdo) + self.ultimapos(nodo.derecho)
         elif token == "CONCATENACION":
-            return self.primerapos(nodo.derecho)
-        elif token == "KLEENE" or token == "+":
-            return self.primerapos(nodo.derecho)
+            return self.ultimapos(nodo.derecho)
+        elif token == "KLEENE":
+            return self.ultimapos(nodo.derecho) + [(None, "VOID", '\0')]
+        elif token == "+":
+            return self.ultimapos(nodo.derecho)
         else:
-            return [("".join(nodo.Dato[2:]), nodo.etiqueta, nodo)]
+            return [(nodo)]
 
     def siguientepos(self, nodo):
-        return self.primerapos(nodo.padre.derecho)
+        sig = [self.primerapos(nodo.padre.derecho)]
+        curr = self.hasParentAnulable(nodo)
+        # Buscar los tokens anulables
+        while curr != False:
+            token = curr
+            if token is not "KLEENE" and token is not "+":
+                return self.primerapos(nodo.padre.derecho)
+            else:
+                return [(None, "VOID", '\0')]
+
 
     # Construir el automata
     def construir_automata(self):
-        estado = []
-        marcados = {}
-        simbolos = []
-        nodos = []
-        for (a, b, c) in self.primerapos(self.root):
-            estado.append(b)
-            if a not in simbolos:
-                simbolos.append(a)
-            if c not in nodos:
-                nodos.append(c)
-
-        marcados[estado] = "blanco"
-        for b in marcados:
-            marcados[b] = "negro"
-            U = []
-            for c in simbolos:
-                for nodo in nodos:
-                    if c == "".join(nodo.Dato[3:]):
-                        U.append(nodo.etiqueta)
-                if U not in marcados:
-                    marcados[U] = "blanco"
-                self.make_link(b, U, c)
+        pass
 
     #recursiones que contruyen el arbol sintactico
     def or_exp(self):
@@ -245,11 +252,11 @@ class LexicoParser:
         nodo = Nodo();
         self.etiqueta += 1
         nodo.etiqueta = self.etiqueta
-        if self.tokens[self.index][1] == "CONCATENACION" and self.index < len(self.tokens):
+        if (self.tokens[self.index][1] == "SIMBOLO" or self.tokens[self.index][1] == "PO") \
+                and self.index < len(self.tokens):
             izquierdo.padre = nodo
             nodo.isCaracter = False
-            nodo.Dato = self.tokens[self.index]
-            self.index += 1
+            nodo.Dato = (self.tokens[self.index][0], "CONCATENACION", '')
             hijo = self.kleene()
             derecho = self.cat_exp_p(hijo)
             derecho.padre = nodo
@@ -333,11 +340,44 @@ for expresiones in texto:
     print("-------------------------------------")
     aux = expresiones.split("=>")
     if len(aux) < 2:
-        raise Exception("Hay una regla sin nombre")
+        sys.stderr.write("\nHay una regla sin nombre")
+        continue
     name = aux[0]
     lexer = LexicoLexer(aux[1])
     tokens = lexer.getTokenList()
     parser = LexicoParser(tokens)
     parser.inicio()
     parser.preOrden(parser.root)
-    #parser.construir_automata()
+    print("Hacer automata")
+    cola = [parser.primerapos(parser.root)]
+    for estado in cola:
+        # separar y clasificar los distintos tipos de simbolos en el estado actual y guardarlo en simbolos
+        simbolos = {}
+        for simbol in estado:
+            s = ""
+            if type(simbol) == Nodo:
+                # hacer asociacion de simbolos en el diccionario simbolos
+                s = s.join(simbol.Dato[2:])
+                if s not in simbolos:
+                    simbolos[s] = []
+                simbolos[s].append(simbol)  # Agrega el nodo correspondiente al simbolo
+
+        # Para cada simbolo de entrada 'a' en el diccionario, dejar que U sea la union de siguientepos(p) para
+        # todas las 'p'=nodos actuales que correspondan con el simbolo 'a'
+        for simbolo in simbolos:
+            U = []
+            print(simbolo)
+            for nodo in simbolos[simbolo]:  # union
+                U += parser.siguientepos(nodo)
+
+            for n in U:
+                print("Siguiente es:", n.Dato)
+
+            if U not in cola:
+                pass
+            else:
+                print("Este si esta !!!")
+
+
+
+                #parser.construir_automata()
