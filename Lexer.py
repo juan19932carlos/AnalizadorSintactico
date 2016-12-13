@@ -336,11 +336,14 @@ class LexicoParser:
         if self.index < len(self.tokens) and self.tokens[self.index][1] is "PO":
             self.index += 1
             hijo = self.or_exp(h + 1)
-            if self.index < len(self.tokens) and self.tokens[self.index][1] != "PC":
+
+            # si la lista llego al final o el siguiente token es distinto a el parentecis que cierra
+            if self.index >= len(self.tokens) or self.tokens[self.index][1] != "PC":
                 raise Exception("No hay equilibrio de parentecis", self.tokens[self.index][0])
             else:
                 self.index += 1
                 return hijo
+
         elif self.index < len(self.tokens) and self.tokens[self.index][1] is "SIMBOLO":
             self.index += 1
             nodo = Nodo();
@@ -389,13 +392,6 @@ for expresiones in texto:
     tokens = lexer.getTokenList()
     parser = LexicoParser(tokens)
     parser.inicio()
-    parser.preOrden(parser.root)
     # aux = (parser.siguientepos(parser.root.izquierdo.derecho.derecho))
-
-
-
-
-
-
-
-#parser.construir_automata()
+    parser.construir_automata()
+    print(parser.D)
