@@ -1,6 +1,5 @@
 import sys
 
-
 class Nodo:
     def __init__(self):
         self.isCaracter = None  # Booleano que define si es operacion o simbolos
@@ -11,121 +10,141 @@ class Nodo:
         self.etiqueta = None
 class LexicoLexer:
     def __init__(self, entrada):
-        self.input = entrada
+        self.input = entrada + '$'
         self.TokenList = []
         self.index = 0
-    def getNextToken(self,ind = None):
-        state = 0
-        return_aux = None
-        if ind == None:
-            ind = self.index
-        while ind < len(self.input):
-            c = self.input[ind]
-            ind += 1
-            if state == 0:
-                if c == '(' or c == '[':
-                    state = 1
-                elif c == ')' or c == ']':
-                    state = 2
-                elif c.isalpha():
-                    state = 3
-                elif c.isdigit():
-                    state = 6
-                elif c == '+':
-                    state = 9
-                elif c == '*':
-                    state = 10
-                elif c == '|':
-                    state = 11
-                elif c == ':':
-                    state = 16
-                elif c == '.':
-                    state == 13
-                elif c == '?':
-                    state = 17
-                elif c == '\t' or c == '\n' or c == ' ':
-                    state = 18
-                elif c == '"':
-                    state = 19
-                else:
-                    state = 14
-            elif state == 1:
-                return (ind - 1, "PO")
-            elif state == 2:
-                return (ind - 1, "PC")
-            elif state == 3:
-                if c == '-':
-                    state = 4
-                    return_aux = (ind - 1, "SIMBOLO")
-                else:
-                    ind -= 1
-                    state = 15
-            elif state == 4:
-                if c.isalpha():
-                    state = 5
-                elif return_aux is not None:
-                    return return_aux
-                else:
-                    ind -= 1
-                    state = 14
-            elif state == 5:
-                return (ind - 1, "CUALQUIER LETRA")
-            elif state == 6:
-                if c == '-':
-                    state = 7
-                    return_aux = (ind - 1, "SIMBOLO")
-                else:
-                    ind -= 1
-                    state = 15
-            elif state == 7:
-                if c.isdigit():
-                    state = 8
-                elif return_aux is not None:
-                    return return_aux
-                else:
-                    ind -= 1
-                    state = 14
-            elif state == 8:
-                return (ind - 1, "CUALQUIER NUMERO")
-            elif state == 9:
-                return (ind - 1, "+")
-            elif state == 10:
-                return (ind - 1, "KLEENE")
-            elif state == 11:
-                return (ind - 1, "OR")
-            elif state == 12:
-                return (ind - 1, "ASIGNACION")
-            elif state == 13:
-                return (ind - 1, "CUALQUIERCOSA")
-            elif state == 14:  # TODO: testing
-                return (ind - 1, "NO REC")
-            elif state == 15:
-                return (ind - 1, "SIMBOLO")
-            elif state == 16:
-                return (ind - 1, "CONCATENACION")
-            elif state == 17:
-                return (ind - 1, "OPER ?")
-            elif state == 18:
-                if c == '\t' or c == '\n' or c == ' ':
-                    state = 18
-                else:
-                    return (ind - 1, "BLANCO")
-            elif state == 19:
-                return (ind - 1, "COMILLA")
-            else:
-                return (ind, "DESCONOCIDO")
-    def getTokenList(self,remake = False):
-        bandera = 0
-        if remake or len(self.TokenList) == 0:
-            while bandera < len(self.input):
-                token = self.getNextToken(bandera)
-                print(token)
-                if token[1] != "BLANCO" and token != None:
-                    txt = self.input[bandera:token[0]]
-                    (self.TokenList).append( token + tuple(txt) )
-                bandera = token[0]
 
-        return self.TokenList
+    def getNextToken(self, index=0):
+        '''
+        :param ind: indice desde el cual empieza a buscar en el string de entrada
+        :return: tupla generada por segun los estados de aceptacion.
+        '''
+        ind = index
+        state = 0
+        while (ind <= len(self.input)):
+            if state is 0:
+                c = self.input[ind]
+                ind += 1
+                if c.isalpha():
+                    state = 1
+                elif c.isnumeric():
+                    state = 4
+                elif c is '(' or c is '[':
+                    state = 7
+                elif c is ')' or c is ']':
+                    state = 8
+                elif c is '|':
+                    state = 9
+                elif c is '*':
+                    state = 10
+                elif c is '+':
+                    state = 11
+                elif c is ' ':
+                    state = 13
+                elif c is '$':
+                    state = 15
+                else:
+                    self.fallo()
+            elif state is 1:
+                c = self.input[ind]
+                ind += 1
+                if c is '-':
+                    state = 2
+                else:
+                    state = 12
+            elif state is 2:
+                c = self.input[ind]
+                ind += 1
+                if c.isalpha():
+                    state = 3
+                else:
+                    self.fallo()
+            elif state is 3:
+                break
+            elif state is 4:
+                c = self.input[ind]
+                ind += 1
+                if c is '-':
+                    state = 5
+                else:
+                    state = 12
+            elif state is 5:
+                c = self.input[ind]
+                ind += 1
+                if c.isnumeric():
+                    state = 6
+                else:
+                    self.fallo()
+            elif state is 6:
+                break
+            elif state is 7:
+                break
+            elif state is 8:
+                break
+            elif state is 9:
+                break
+            elif state is 10:
+                break
+            elif state is 11:
+                break
+            elif state is 12:
+                ind -= 1
+                break
+            elif state is 13:
+                c = self.input[ind]
+                ind += 1
+                if c is ' ':
+                    state = 13
+                else:
+                    state = 14
+            elif state is 14:
+                ind -= 1
+                break
+            elif state is 15:
+                break
+            else:
+                self.fallo()
+
+        # Estados de aceptación
+        if state is 3:
+            return (ind, "CUALQUIER LETRA", "".join(self.input[index:ind]))
+        elif state is 6:
+            return (ind, "CUALQUIER NUMERO", "".join(self.input[index:ind]))
+        elif state is 7:
+            return (ind, "PO", "".join(self.input[index:ind]))
+        elif state is 8:
+            return (ind, "PC", "".join(self.input[index:ind]))
+        elif state is 9:
+            return (ind, "OR", "".join(self.input[index:ind]))
+        elif state is 10:
+            return (ind, "KLEENE", "".join(self.input[index:ind]))
+        elif state is 11:
+            return (ind, "+", "".join(self.input[index:ind]))
+        elif state is 12:
+            return (ind, "SIMBOLO", "".join(self.input[index:ind]))
+        elif state is 14:
+            return (ind, "BLANCO", "".join(self.input[index:ind]))
+        elif state is 15:
+            return (ind, "FIN", "".join(self.input[index:ind]))
+        else:
+            self.fallo()
+
+    def getTokenList(self, remake=False):
+        ind = 0
+        lista_vacia = not self.TokenList or remake
+        print("remake:", lista_vacia)
+        while True or lista_vacia:
+            token = self.getNextToken(ind)
+            if token[1] is not "BLANCO":
+                self.TokenList.append(token)
+            ind = token[0]
+
+            if token[1] is "FIN":
+                break
+        return self.TokenList.copy()
+
+    def fallo(self):
+        raise Exception("Error lexico");
 class LexicoParser:
     def __init__(self,tokens):
         if type(tokens) != type(list()):
@@ -134,7 +153,6 @@ class LexicoParser:
         #Lista de primeras en
         self.D = {}
         self.tokens = tokens
-        self.tokens.append((float("inf"), "END", "\0"))  # poner caracter de fin
         self.index = 0  # index para el contador de los tokens
     def make_link(self, N_actual, N_destino, etiqueta):
         if not N_actual in self.D:
@@ -162,7 +180,7 @@ class LexicoParser:
             return self.anulable(nodo.derecho) and self.anulable(nodo.izquierdo)
         elif nodo.Dato[1] is "KLEENE":
             return True
-        elif nodo.Dato[1] is "END":
+        elif nodo.Dato[1] is "FIN":
             return True
         elif nodo.Dato[1] is "+":
             return self.anulable(nodo.derecho)
@@ -247,7 +265,7 @@ class LexicoParser:
     def or_exp_p(self, izquierdo, h):
         print("  " * h, "or_exp_p")
         nodo = Nodo();
-        if self.tokens[self.index][1] == "OR":
+        if self.index < len(self.tokens) and self.tokens[self.index][1] == "OR":
             izquierdo.padre = nodo
             nodo.isCaracter = False
             nodo.Dato = self.tokens[self.index]
@@ -269,8 +287,12 @@ class LexicoParser:
     def cat_exp_p(self, izquierdo, h):
         print("  " * h, "cat_exp_p")
         nodo = Nodo();
-        if (self.tokens[self.index][1] == "SIMBOLO" or self.tokens[self.index][1] == "PO") \
-                and self.index < len(self.tokens):
+        if self.index < len(self.tokens) and (self.tokens[self.index][1] is "SIMBOLO" or \
+                                                          self.tokens[self.index][1] is "CUALQUIER LETRA" or \
+                                                          self.tokens[self.index][1] is "CUALQUIER NUMERO" or \
+                                                          self.tokens[self.index][1] is "PO" or \
+                                                          self.tokens[self.index][1] is "FIN"):
+
             izquierdo.padre = nodo
             nodo.isCaracter = False
             nodo.Dato = (self.tokens[self.index][0], "CONCATENACION", '')
@@ -292,14 +314,14 @@ class LexicoParser:
         nodo = Nodo();
         # Estrella de kleene solo genera hijos derechos
         print("  " * h, "kleene_p")
-        if self.tokens[self.index][1] == "+" and self.index < len(self.tokens):
+        if self.index < len(self.tokens) and self.tokens[self.index][1] is "+":
             hijo.padre = nodo
             nodo.isCaracter = False
             nodo.Dato = self.tokens[self.index]
             nodo.derecho = hijo
             self.index += 1
             return nodo
-        elif self.tokens[self.index][1] == "KLEENE" and self.index < len(self.tokens):
+        elif self.index < len(self.tokens) and self.tokens[self.index][1] is "KLEENE":
             hijo.padre = nodo
             nodo.isCaracter = False
             nodo.Dato = self.tokens[self.index]
@@ -311,45 +333,38 @@ class LexicoParser:
 
     def parent(self, h):
         print("  " * h, "parent")
-        if self.tokens[self.index][1] == "PO" and self.index < len(self.tokens):
+        if self.index < len(self.tokens) and self.tokens[self.index][1] is "PO":
             self.index += 1
-            hijo = self.or_exp(h +1)
-            if self.tokens[self.index][1] != "PC" and self.index < len(self.tokens):
+            hijo = self.or_exp(h + 1)
+            if self.index < len(self.tokens) and self.tokens[self.index][1] != "PC":
                 raise Exception("No hay equilibrio de parentecis", self.tokens[self.index][0])
             else:
                 self.index += 1
                 return hijo
-        elif self.tokens[self.index][1] == "SIMBOLO" and self.index < len(self.tokens):
+        elif self.index < len(self.tokens) and self.tokens[self.index][1] is "SIMBOLO":
             self.index += 1
             nodo = Nodo();
             nodo.isCaracter = True
             nodo.Dato = self.tokens[self.index - 1]
             return nodo
-        elif self.tokens[self.index][1] == "CUALQUIER NUMERO" and self.index < len(self.tokens):
+        elif self.index < len(self.tokens) and self.tokens[self.index][1] is "CUALQUIER NUMERO":
             self.index += 1
             nodo = Nodo();
             nodo.isCaracter = True
             nodo.Dato = self.tokens[self.index - 1]
             return nodo
-        elif self.tokens[self.index][1] == "CUALQUIER LETRA" and self.index < len(self.tokens):
+        elif self.index < len(self.tokens) and self.tokens[self.index][1] is "CUALQUIER LETRA":
             self.index += 1
             nodo = Nodo();
             nodo.isCaracter = True
             nodo.Dato = self.tokens[self.index - 1]
             return nodo
-        elif self.tokens[self.index][1] == "CUALQUIERCOSA" and self.index < len(self.tokens):
+        elif self.index < len(self.tokens) and self.tokens[self.index][1] is "FIN":
             self.index += 1
             nodo = Nodo();
             nodo.isCaracter = True
             nodo.Dato = self.tokens[self.index - 1]
             return nodo
-        elif self.tokens[self.index][1] == "END" and self.index < len(self.tokens):
-            self.index += 1
-            nodo = Nodo();
-            nodo.isCaracter = True
-            nodo.Dato = self.tokens[self.index - 1]
-            return nodo
-
 
 def sort_nodos(U):
     '''
@@ -366,24 +381,16 @@ texto = archivo.readlines()
 
 for expresiones in texto:
     print("-------------------------------------")
-    aux = expresiones.split("=>")
-    if len(aux) < 2:
+    nombre, exprecion = expresiones.split("=>")
+    if not exprecion:
         sys.stderr.write("\nHay una regla sin nombre")
         continue
-    name = aux[0]
-    lexer = LexicoLexer(aux[1])
+    lexer = LexicoLexer(exprecion)
     tokens = lexer.getTokenList()
-    print(tokens)
     parser = LexicoParser(tokens)
     parser.inicio()
-    print(parser.root.Dato)
     parser.preOrden(parser.root)
     # aux = (parser.siguientepos(parser.root.izquierdo.derecho.derecho))
-    '''print("Testing ")
-    for nodo in aux:
-        print (nodo.Dato)'''
-
-    print(parser.D)
 
 
 
